@@ -3,114 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Raspberry Pi Server</title>
+    <title>Pi Neon Control Panel</title>
 
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: Arial, Helvetica, sans-serif;
-        background: #0f172a;
-        color: white;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      header {
-        padding: 1rem 2rem;
-        background: #1e293b;
-        border-bottom: 1px solid #334155;
-      }
-
-      nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .logo {
-        font-size: 1.4rem;
-        font-weight: bold;
-      }
-
-      main {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        padding: 2rem;
-      }
-
-      .hero {
-        max-width: 700px;
-      }
-
-      h1 {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-      }
-
-      h2 {
-        font-size: 2.5rem;
-      }
-
-      p {
-        font-size: 1.2rem;
-        color: #cbd5e1;
-        margin-bottom: 2rem;
-        line-height: 1.6;
-      }
-
-      .button {
-        display: inline-block;
-        padding: 0.9rem 1.8rem;
-        background: #3b82f6;
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        transition: 0.3s;
-      }
-
-      .button:hover {
-        background: #2563eb;
-      }
-
-      footer {
-        text-align: center;
-        padding: 1rem;
-        background: #1e293b;
-        color: #94a3b8;
-        border-top: 1px solid #334155;
-      }
-    </style>
+    <link rel="stylesheet" href="css/main.css" />
   </head>
+
   <body>
-    <header>
-      <nav>
-        <div class="logo">🍓 Raspberry Pi</div>
-        <div>Home</div>
-      </nav>
-    </header>
+    <!-- SCANLINES -->
+    <div class="scanlines"></div>
 
-    <main>
-      <div class="hero">
-        <h1>Welcome to My Raspberry Pi Server</h1>
-        <h2>Auto deploy test working 🚀</h2>
-        <p>
-          This website is hosted on a Raspberry Pi running in my home lab. It's
-          a place for projects, experiments, and learning.
-        </p>
+    <!-- NAV -->
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#metrics">Metrics</a>
+      <a href="#status">Status</a>
+    </nav>
 
-        <a href="#" class="button">Explore</a>
+    <!-- HERO -->
+    <section class="hero" id="home">
+      <div class="hero-frame">
+        <div class="hero-img" id="heroImg"></div>
+        <div class="hero-overlay"></div>
+
+        <div class="hero-text">
+          <div class="hero-title" id="heroTitle">NEON SYSTEM ONLINE</div>
+          <div class="hero-sub">Raspberry Pi Control Interface</div>
+        </div>
       </div>
-    </main>
+    </section>
 
-    <footer>© 2026 DJ Reider</footer>
+    <!-- METRICS -->
+    <section id="metrics">
+      <div class="section-title">System Metrics</div>
+
+      <div class="grid">
+        <div class="card" id="cpuCard">
+          <h3>CPU Temperature</h3>
+          <div class="meter">
+            <div id="cpuBar" class="bar"></div>
+          </div>
+          <div id="cpuText">--°C</div>
+        </div>
+
+        <div class="card">
+          <h3>Uptime</h3>
+          <div id="uptimeText">--</div>
+        </div>
+
+        <div class="card">
+          <h3>Disk Usage</h3>
+          <div class="meter">
+            <div id="diskBar" class="bar"></div>
+          </div>
+          <div id="diskText">--</div>
+        </div>
+
+        <div class="card">
+          <h3>Load Average</h3>
+          <div id="loadText">--</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATUS -->
+    <section id="status">
+      <div class="section-title">System Status</div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Web Server</h3>
+          <div>Apache Running</div>
+        </div>
+
+        <div class="card">
+          <h3>Deploy System</h3>
+          <div>GitHub Runner Active</div>
+        </div>
+
+        <div class="card">
+          <h3>System</h3>
+          <div>Pi Online</div>
+        </div>
+      </div>
+    </section>
+
+    <script src="js/main.js"></script>
   </body>
 </html>
