@@ -1,5 +1,16 @@
 const API = "http://192.168.1.222:5050";
 
+/* HERO */
+const images = [
+  "https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc?auto=format&fit=crop&w=1200&q=60",
+  "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=60",
+  "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=60",
+];
+
+document.getElementById("heroImg").style.backgroundImage =
+  `url('${images[Math.floor(Math.random() * images.length)]}')`;
+
+/* METRICS LOOP */
 let lock = false;
 
 async function updateMetrics() {
@@ -30,18 +41,13 @@ async function updateMetrics() {
 
     document.getElementById("loadText").textContent = data.load.join(" / ");
   } catch (e) {
-    document.getElementById("apiDot").classList.add("offline");
     document.getElementById("apiDot").classList.remove("online");
   }
 
   lock = false;
 }
 
-updateMetrics();
-setInterval(updateMetrics, 3000);
-
-/* CONTROL ACTIONS */
-
+/* CONTROLS */
 async function restartApache() {
   await fetch(`${API}/api/restart-apache`);
 }
@@ -51,5 +57,8 @@ async function rebootPi() {
 }
 
 async function triggerDeploy() {
-  console.log("Deploy hook placeholder");
+  console.log("deploy");
 }
+
+updateMetrics();
+setInterval(updateMetrics, 3000);
