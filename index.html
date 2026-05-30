@@ -3,37 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEON PI SYSTEM</title>
+    <title>NEON PI OS</title>
 
     <link rel="stylesheet" href="css/main.css" />
   </head>
 
   <body>
-    <!-- SCANLINE + GLOW OVERLAY -->
     <div class="scanlines"></div>
     <div class="vignette"></div>
 
     <!-- HUD -->
     <div id="hud">
-      <div class="hud-item">
-        <span class="dot" id="apiDot"></span>
-        CORE
-      </div>
-
+      <div class="hud-item"><span class="dot" id="apiDot"></span> CORE</div>
       <div class="hud-item">CPU <span id="hudCpu">--</span>°C</div>
-
       <div class="hud-item">LOAD <span id="hudLoad">--</span></div>
-
       <div class="hud-item">PING <span id="hudPing">--</span>ms</div>
     </div>
 
-    <!-- NAV -->
     <nav>
       <a href="#hero">HOME</a>
       <a href="#metrics">METRICS</a>
-      <a href="#network">NETWORK</a>
+      <a href="#graph">GRAPH</a>
+      <a href="#events">EVENTS</a>
       <a href="#control">CONTROL</a>
-      <a href="#status">STATUS</a>
     </nav>
 
     <!-- HERO -->
@@ -43,15 +35,13 @@
           <span class="t-dot red"></span>
           <span class="t-dot yellow"></span>
           <span class="t-dot green"></span>
-          <span class="terminal-title">NEON CORE INTERFACE</span>
+          <span class="terminal-title">NEON CORE</span>
         </div>
 
         <div class="hero-frame">
           <div class="hero-img" id="heroImg"></div>
-
           <div class="hero-overlay">
-            <div class="hero-title" id="heroTitle">SYSTEM ONLINE</div>
-            <div class="hero-sub">Raspberry Pi Control Node</div>
+            <div class="hero-title">SYSTEM ACTIVE</div>
           </div>
         </div>
       </div>
@@ -62,22 +52,9 @@
       <div class="section-title">SYSTEM METRICS</div>
 
       <div class="grid">
-        <div class="card glow-card">
-          <h3>CPU CORE</h3>
-
-          <div class="gauge">
-            <svg viewBox="0 0 100 100">
-              <circle class="bg" cx="50" cy="50" r="40"></circle>
-              <circle
-                class="meter"
-                id="cpuCircle"
-                cx="50"
-                cy="50"
-                r="40"
-              ></circle>
-            </svg>
-            <div class="gauge-text" id="cpuText">--°C</div>
-          </div>
+        <div class="card">
+          <h3>CPU TEMP</h3>
+          <div class="big" id="cpuText">--</div>
         </div>
 
         <div class="card">
@@ -87,10 +64,7 @@
 
         <div class="card">
           <h3>DISK</h3>
-          <div class="meter">
-            <div id="diskBar" class="bar"></div>
-          </div>
-          <div id="diskText">--</div>
+          <div class="big" id="diskText">--</div>
         </div>
 
         <div class="card">
@@ -100,68 +74,32 @@
       </div>
     </section>
 
-    <!-- NETWORK -->
-    <section id="network">
-      <div class="section-title">NETWORK LAYER</div>
+    <!-- GRAPH -->
+    <section id="graph">
+      <div class="section-title">CPU HISTORY</div>
 
-      <div class="grid">
-        <div class="card glow-card">
-          <h3>LATENCY</h3>
-          <div class="big"><span id="hudPing">--</span> ms</div>
-        </div>
-
-        <div class="card">
-          <h3>STATUS</h3>
-          <div class="big">LOCAL NODE ACTIVE</div>
-        </div>
-
-        <div class="card">
-          <h3>CONNECTION</h3>
-          <div class="big">STABLE</div>
-        </div>
+      <div class="card">
+        <canvas id="cpuGraph" width="900" height="200"></canvas>
       </div>
+    </section>
+
+    <!-- EVENTS -->
+    <section id="events">
+      <div class="section-title">SYSTEM EVENTS</div>
+
+      <div class="card event-box" id="eventBox"></div>
     </section>
 
     <!-- CONTROL -->
     <section id="control">
-      <div class="section-title">CONTROL MATRIX</div>
-
-      <div class="grid">
-        <div class="card button-card">
-          <h3>APACHE</h3>
-          <button onclick="restartApache()">RESTART</button>
-        </div>
-
-        <div class="card button-card">
-          <h3>SYSTEM</h3>
-          <button onclick="rebootPi()">REBOOT</button>
-        </div>
-
-        <div class="card button-card">
-          <h3>DEPLOY</h3>
-          <button onclick="triggerDeploy()">DEPLOY</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- STATUS -->
-    <section id="status">
-      <div class="section-title">SYSTEM STATUS</div>
+      <div class="section-title">CONTROL</div>
 
       <div class="grid">
         <div class="card">
-          <h3>WEB CORE</h3>
-          <div class="big">APACHE ONLINE</div>
+          <button onclick="restartApache()">Restart Apache</button>
         </div>
-
         <div class="card">
-          <h3>CI/CD</h3>
-          <div class="big">RUNNER ACTIVE</div>
-        </div>
-
-        <div class="card">
-          <h3>NODE</h3>
-          <div class="big">OPERATIONAL</div>
+          <button onclick="rebootPi()">Reboot Pi</button>
         </div>
       </div>
     </section>

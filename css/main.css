@@ -2,7 +2,10 @@
   --bg: #05010a;
   --cyan: #00f5ff;
   --pink: #ff2bd6;
-  --glow: 0 0 12px;
+  --purple: #7c3aed;
+
+  --glow-cyan: 0 0 8px var(--cyan), 0 0 20px rgba(0, 245, 255, 0.3);
+  --glow-pink: 0 0 8px var(--pink), 0 0 20px rgba(255, 43, 214, 0.25);
 }
 
 /* RESET */
@@ -14,20 +17,23 @@
 
 body {
   font-family: system-ui, sans-serif;
-  background: radial-gradient(circle at top, #0b0120, var(--bg));
+  background: radial-gradient(circle at top, #12062a, var(--bg));
   color: white;
   overflow-x: hidden;
 }
 
-/* SCANLINES */
+/* =========================
+   ATMOSPHERIC LAYERS
+========================= */
+
 .scanlines {
   position: fixed;
   inset: 0;
   background: repeating-linear-gradient(
     to bottom,
     rgba(255, 255, 255, 0.03),
-    transparent 3px,
-    transparent 6px
+    transparent 2px,
+    transparent 5px
   );
   pointer-events: none;
   z-index: 9999;
@@ -36,11 +42,14 @@ body {
 .vignette {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.6));
+  background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.75));
   pointer-events: none;
 }
 
-/* HUD */
+/* =========================
+   HUD (TOP STATUS BAR)
+========================= */
+
 #hud {
   position: fixed;
   top: 0;
@@ -49,16 +58,16 @@ body {
   justify-content: center;
   gap: 22px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85);
   border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+  backdrop-filter: blur(10px);
   z-index: 1000;
 }
 
 .hud-item {
-  display: flex;
-  gap: 6px;
   font-size: 12px;
   color: #a5f3ff;
+  letter-spacing: 1px;
 }
 
 .dot {
@@ -70,17 +79,20 @@ body {
 
 .dot.online {
   background: var(--cyan);
-  box-shadow: var(--glow) var(--cyan);
+  box-shadow: var(--glow-cyan);
 }
 
-/* NAV */
+/* =========================
+   NAVIGATION
+========================= */
+
 nav {
   position: fixed;
   top: 42px;
   width: 100%;
   display: flex;
   justify-content: center;
-  gap: 28px;
+  gap: 26px;
   padding: 10px;
   z-index: 900;
 }
@@ -88,23 +100,27 @@ nav {
 nav a {
   color: var(--cyan);
   text-decoration: none;
-  letter-spacing: 2px;
   font-size: 12px;
+  letter-spacing: 2px;
   opacity: 0.8;
+  transition: 0.2s;
 }
 
 nav a:hover {
   opacity: 1;
-  text-shadow: var(--glow) var(--cyan);
+  text-shadow: var(--glow-cyan);
 }
 
-/* HERO TERMINAL */
+/* =========================
+   HERO TERMINAL
+========================= */
+
 .hero {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 100px;
+  padding-top: 110px;
 }
 
 .terminal {
@@ -112,15 +128,18 @@ nav a:hover {
   border: 1px solid rgba(0, 245, 255, 0.4);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(0, 245, 255, 0.15);
+  box-shadow:
+    0 0 25px rgba(0, 245, 255, 0.15),
+    0 0 80px rgba(124, 58, 237, 0.08);
 }
 
+/* terminal top bar */
 .terminal-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
 }
 
 .t-dot {
@@ -143,7 +162,7 @@ nav a:hover {
   height: 420px;
   background-size: cover;
   background-position: center;
-  filter: contrast(1.1) saturate(1.2);
+  filter: contrast(1.15) saturate(1.25) brightness(0.9);
 }
 
 .hero-overlay {
@@ -153,16 +172,20 @@ nav a:hover {
 .hero-title {
   font-size: 28px;
   color: var(--pink);
-  text-shadow: var(--glow) var(--pink);
-  animation: flicker 3s infinite;
+  text-shadow: var(--glow-pink);
+  animation: flicker 3.2s infinite;
+  letter-spacing: 2px;
 }
 
 .hero-sub {
   color: #a5f3ff;
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
-/* SECTIONS */
+/* =========================
+   SECTIONS
+========================= */
+
 section {
   padding: 90px 20px;
   max-width: 1100px;
@@ -173,34 +196,56 @@ section {
   color: var(--cyan);
   margin-bottom: 20px;
   letter-spacing: 3px;
+  text-shadow: var(--glow-cyan);
 }
 
-/* GRID */
+/* =========================
+   GRID + CARDS
+========================= */
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 18px;
 }
 
-/* CARDS */
 .card {
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  padding: 18px;
   border-radius: 12px;
-  transition: 0.2s;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: 0.25s;
+  position: relative;
+  overflow: hidden;
 }
 
-.glow-card {
-  box-shadow: 0 0 20px rgba(0, 245, 255, 0.08);
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(0, 245, 255, 0.06),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: 0.6s;
+}
+
+.card:hover::before {
+  transform: translateX(100%);
 }
 
 .card:hover {
-  transform: translateY(-2px);
   border-color: rgba(0, 245, 255, 0.3);
+  transform: translateY(-2px);
 }
 
-/* BUTTONS */
+/* =========================
+   BUTTONS
+========================= */
+
 button {
   width: 100%;
   padding: 10px;
@@ -209,63 +254,64 @@ button {
   color: var(--cyan);
   letter-spacing: 2px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 button:hover {
   background: var(--cyan);
   color: black;
+  box-shadow: var(--glow-cyan);
 }
 
-/* GAUGE */
-.gauge {
-  position: relative;
-  width: 140px;
-  margin: auto;
+/* =========================
+   GRAPH CANVAS
+========================= */
+
+canvas {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
 }
 
-circle {
-  fill: none;
-  stroke-width: 8;
+/* =========================
+   EVENT BOX
+========================= */
+
+.event-box {
+  height: 220px;
+  overflow-y: auto;
+  font-size: 12px;
+  color: #a5f3ff;
+  line-height: 1.5;
 }
 
-circle.bg {
-  stroke: rgba(255, 255, 255, 0.08);
-}
+/* =========================
+   TEXT HELPERS
+========================= */
 
-circle.meter {
-  stroke: var(--cyan);
-  stroke-dasharray: 251;
-  stroke-dashoffset: 251;
-  transition: 0.5s;
-  filter: drop-shadow(0 0 6px var(--cyan));
-}
-
-.gauge-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--pink);
-}
-
-/* TEXT HELPERS */
 .big {
   font-size: 18px;
   color: #a5f3ff;
 }
 
-/* ANIMATION */
+/* =========================
+   ANIMATIONS
+========================= */
+
 @keyframes flicker {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.55;
   }
 }
 
-/* RESPONSIVE */
+/* =========================
+   RESPONSIVE
+========================= */
+
 @media (max-width: 768px) {
   nav {
     flex-wrap: wrap;
@@ -279,5 +325,9 @@ circle.meter {
 
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero-img {
+    height: 280px;
   }
 }

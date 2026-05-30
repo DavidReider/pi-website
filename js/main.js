@@ -1,53 +1,112 @@
 const API = "http://192.168.1.222:5050";
 
-/* HERO */
+let cpuHistory = [];
+
+/* HERO IMAGE */
 const images = [
-  "https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc?auto=format&fit=crop&w=1200&q=60",
-  "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=60",
-  "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=60",
+  "https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc",
+  "https://images.unsplash.com/photo-1504384308090-c894fdcc538d",
+  "https://images.unsplash.com/photo-1518770660439-4636190af475",
 ];
 
 document.getElementById("heroImg").style.backgroundImage =
-  `url('${images[Math.floor(Math.random() * images.length)]}')`;
+  `url(${images[Math.floor(Math.random() * images.length)]})`;
 
-/* METRICS LOOP */
-let lock = false;
+/* =============================
+   CPU GRAPH (FIXED SCALING)
+============================= */
 
-async function updateMetrics() {
-  if (lock) return;
-  lock = true;
+function drawGraph(data) {
+  const canvas = document.getElementById("cpuGraph");
+  const ctx = canvas.getContext("2d");
 
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!data || data.length < 2) return;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#00f5ff";
+  ctx.lineWidth = 2;
+
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * canvas.width;
+    const normalized = (v - min) / range;
+    const y = canvas.height - normalized * canvas.height;
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.stroke();
+}
+
+/* =============================
+   EVENTS RENDER
+============================= */
+
+function renderEvents(events) {
+  const box = document.getElementById("eventBox");
+  if (!box) return;
+
+  box.innerHTML = "";
+
+  (events || []).forEach((e) => {
+    const div = document.createElement("div");
+    div.textContent = `[${e.time}] ${e.msg}`;
+    box.appendChild(div);
+  });
+}
+
+/* =============================
+   MAIN LOOP
+============================= */
+
+async function update() {
   try {
     const res = await fetch(`${API}/api/stats`);
     const data = await res.json();
 
     document.getElementById("apiDot").classList.add("online");
 
-    document.getElementById("hudCpu").textContent = data.cpu_temp;
-    document.getElementById("hudLoad").textContent = data.load.join("-");
-    document.getElementById("hudPing").textContent = data.ping;
+    /* SAFE LOAD */
+    const load = Array.isArray(data.load) ? data.load.join(" - ") : "--";
 
-    document.getElementById("cpuText").textContent = data.cpu_temp + "°C";
+    /* HUD */
+    document.getElementById("hudCpu").textContent = data.cpu_temp ?? "--";
+    document.getElementById("hudLoad").textContent = load;
+    document.getElementById("hudPing").textContent = data.ping ?? "--";
 
-    const circle = document.getElementById("cpuCircle");
-    const percent = Math.min(data.cpu_temp / 85, 1);
-    circle.style.strokeDashoffset = 251 - 251 * percent;
+    /* MAIN METRICS */
+    document.getElementById("cpuText").textContent =
+      (data.cpu_temp ?? "--") + "°C";
 
-    document.getElementById("uptimeText").textContent = data.uptime;
+    document.getElementById("uptimeText").textContent = data.uptime ?? "--";
 
-    const disk = parseInt(data.disk_usage);
-    document.getElementById("diskBar").style.width = disk + "%";
-    document.getElementById("diskText").textContent = data.disk_usage;
+    document.getElementById("diskText").textContent = data.disk_usage ?? "--";
 
-    document.getElementById("loadText").textContent = data.load.join(" / ");
-  } catch (e) {
+    document.getElementById("loadText").textContent = load;
+
+    /* GRAPH */
+    cpuHistory = Array.isArray(data.cpu_history) ? data.cpu_history : [];
+
+    drawGraph(cpuHistory);
+
+    /* EVENTS */
+    renderEvents(data.events);
+  } catch (err) {
+    console.log("API error:", err);
     document.getElementById("apiDot").classList.remove("online");
   }
-
-  lock = false;
 }
 
-/* CONTROLS */
+/* =============================
+   CONTROL ACTIONS
+============================= */
+
 async function restartApache() {
   await fetch(`${API}/api/restart-apache`);
 }
@@ -56,9 +115,6 @@ async function rebootPi() {
   await fetch(`${API}/api/reboot`);
 }
 
-async function triggerDeploy() {
-  console.log("deploy");
-}
-
-updateMetrics();
-setInterval(updateMetrics, 3000);
+/* START */
+setInterval(update, 3000);
+update();
