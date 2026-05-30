@@ -3,19 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pi Neon Control Panel</title>
+    <title>Neon Pi Control System</title>
 
     <link rel="stylesheet" href="css/main.css" />
   </head>
 
   <body>
-    <!-- SCANLINES -->
-    <div class="scanlines"></div>
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-item">
+        <span class="dot" id="apiDot"></span>
+        API
+      </div>
+
+      <div class="hud-item">CPU: <span id="hudCpu">--</span>°C</div>
+
+      <div class="hud-item">LOAD: <span id="hudLoad">--</span></div>
+
+      <div class="hud-item">PING: <span id="hudPing">--</span>ms</div>
+    </div>
 
     <!-- NAV -->
     <nav>
       <a href="#home">Home</a>
       <a href="#metrics">Metrics</a>
+      <a href="#control">Control</a>
       <a href="#status">Status</a>
     </nav>
 
@@ -23,8 +35,6 @@
     <section class="hero" id="home">
       <div class="hero-frame">
         <div class="hero-img" id="heroImg"></div>
-        <div class="hero-overlay"></div>
-
         <div class="hero-text">
           <div class="hero-title" id="heroTitle">NEON SYSTEM ONLINE</div>
           <div class="hero-sub">Raspberry Pi Control Interface</div>
@@ -39,10 +49,20 @@
       <div class="grid">
         <div class="card" id="cpuCard">
           <h3>CPU Temperature</h3>
-          <div class="meter">
-            <div id="cpuBar" class="bar"></div>
+
+          <div class="gauge">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="40"></circle>
+              <circle
+                class="meter"
+                id="cpuCircle"
+                cx="50"
+                cy="50"
+                r="40"
+              ></circle>
+            </svg>
+            <div class="gauge-text" id="cpuText">--°C</div>
           </div>
-          <div id="cpuText">--°C</div>
         </div>
 
         <div class="card">
@@ -61,6 +81,28 @@
         <div class="card">
           <h3>Load Average</h3>
           <div id="loadText">--</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTROL PANEL -->
+    <section id="control">
+      <div class="section-title">Control Panel</div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Apache</h3>
+          <button onclick="restartApache()">Restart Apache</button>
+        </div>
+
+        <div class="card">
+          <h3>System</h3>
+          <button onclick="rebootPi()">Reboot Pi</button>
+        </div>
+
+        <div class="card">
+          <h3>Deploy</h3>
+          <button onclick="triggerDeploy()">Trigger Deploy</button>
         </div>
       </div>
     </section>

@@ -1,56 +1,55 @@
-const images = [
-  "https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc",
-  "https://images.unsplash.com/photo-1504384308090-c894fdcc538d",
-  "https://images.unsplash.com/photo-1518770660439-4636190af475",
-  "https://images.unsplash.com/photo-1558494949-ef010cbdcc31",
-];
+const API = "http://192.168.1.222:5050";
 
-const titles = [
-  "NEON SYSTEM ONLINE",
-  "PI NEURAL NODE ACTIVE",
-  "HOME LAB CONTROL GRID",
-  "EXPERIMENTAL SERVER HUB",
-];
+let lock = false;
 
-/* ===== HERO ===== */
-const img = images[Math.floor(Math.random() * images.length)];
-const title = titles[Math.floor(Math.random() * titles.length)];
-
-document.getElementById("heroImg").style.backgroundImage = `url('${img}')`;
-document.getElementById("heroTitle").textContent = title;
-
-/* ===== METRICS ===== */
 async function updateMetrics() {
+  if (lock) return;
+  lock = true;
+
   try {
-    const res = await fetch("http://reider:5050/api/stats");
+    const res = await fetch(`${API}/api/stats`);
     const data = await res.json();
 
-    // CPU
+    document.getElementById("apiDot").classList.add("online");
+
+    document.getElementById("hudCpu").textContent = data.cpu_temp;
+    document.getElementById("hudLoad").textContent = data.load.join("-");
+    document.getElementById("hudPing").textContent = data.ping;
+
     document.getElementById("cpuText").textContent = data.cpu_temp + "°C";
-    document.getElementById("cpuBar").style.width =
-      Math.min((data.cpu_temp / 85) * 100, 100) + "%";
 
-    const cpuCard = document.getElementById("cpuCard");
-    if (data.cpu_temp > 70) {
-      cpuCard.classList.add("warning");
-    } else {
-      cpuCard.classList.remove("warning");
-    }
+    const circle = document.getElementById("cpuCircle");
+    const percent = Math.min(data.cpu_temp / 85, 1);
+    circle.style.strokeDashoffset = 251 - 251 * percent;
 
-    // UPTIME
     document.getElementById("uptimeText").textContent = data.uptime;
 
-    // DISK
     const disk = parseInt(data.disk_usage);
-    document.getElementById("diskText").textContent = data.disk_usage;
     document.getElementById("diskBar").style.width = disk + "%";
+    document.getElementById("diskText").textContent = data.disk_usage;
 
-    // LOAD
     document.getElementById("loadText").textContent = data.load.join(" / ");
   } catch (e) {
-    console.log("API offline", e);
+    document.getElementById("apiDot").classList.add("offline");
+    document.getElementById("apiDot").classList.remove("online");
   }
+
+  lock = false;
 }
 
 updateMetrics();
 setInterval(updateMetrics, 3000);
+
+/* CONTROL ACTIONS */
+
+async function restartApache() {
+  await fetch(`${API}/api/restart-apache`);
+}
+
+async function rebootPi() {
+  await fetch(`${API}/api/reboot`);
+}
+
+async function triggerDeploy() {
+  console.log("Deploy hook placeholder");
+}
