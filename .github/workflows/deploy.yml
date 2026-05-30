@@ -1,0 +1,13 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Run deploy script on Pi
+        run: /home/deploy/deploy.sh
