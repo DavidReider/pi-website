@@ -3,29 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEON PI OS</title>
+    <title>~/pi-dashboard</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="css/main.css" />
   </head>
 
   <body>
+    <!-- BOOT SEQUENCE -->
+    <div id="bootOverlay" class="boot-overlay">
+      <div id="bootLines" class="boot-lines"></div>
+    </div>
+
+    <!-- SCREENSAVER -->
+    <div id="screensaver" class="screensaver">
+      <canvas id="matrixCanvas"></canvas>
+      <div class="screensaver-hud">
+        <div id="ssClock" class="ss-clock">--:--:--</div>
+        <div id="ssCpu" class="ss-cpu">cpu --°c</div>
+      </div>
+    </div>
+
     <div class="scanlines"></div>
     <div class="vignette"></div>
 
     <!-- HUD -->
     <div id="hud">
-      <div class="hud-item"><span class="dot" id="apiDot"></span> CORE</div>
-      <div class="hud-item">CPU <span id="hudCpu">--</span>°C</div>
-      <div class="hud-item">LOAD <span id="hudLoad">--</span></div>
-      <div class="hud-item">PING <span id="hudPing">--</span>ms</div>
+      <div class="hud-item"><span class="dot" id="apiDot"></span>core</div>
+      <div class="hud-item">cpu <span id="hudCpu">--</span>°c</div>
+      <div class="hud-item">load <span id="hudLoad">--</span></div>
+      <div class="hud-item">ping <span id="hudPing">--</span>ms</div>
+      <div class="hud-item">ip <span id="hudIp">--</span></div>
     </div>
 
     <nav>
-      <a href="#hero">HOME</a>
-      <a href="#metrics">METRICS</a>
-      <a href="#graph">GRAPH</a>
-      <a href="#events">EVENTS</a>
-      <a href="#control">CONTROL</a>
+      <a href="#hero">home</a>
+      <a href="#metrics">metrics</a>
+      <a href="#graph">graph</a>
+      <a href="#network">network</a>
+      <a href="#security">security</a>
+      <a href="#events">events</a>
+      <a href="#control">control</a>
     </nav>
 
     <!-- HERO -->
@@ -35,13 +58,14 @@
           <span class="t-dot red"></span>
           <span class="t-dot yellow"></span>
           <span class="t-dot green"></span>
-          <span class="terminal-title">NEON CORE</span>
+          <span class="terminal-title">~/pi-dashboard — status</span>
         </div>
 
         <div class="hero-frame">
           <div class="hero-img" id="heroImg"></div>
           <div class="hero-overlay">
-            <div class="hero-title">SYSTEM ACTIVE</div>
+            <div class="hero-title">system active</div>
+            <div class="hero-sub" id="motd">// monitoring raspberry pi</div>
           </div>
         </div>
       </div>
@@ -49,26 +73,26 @@
 
     <!-- METRICS -->
     <section id="metrics">
-      <div class="section-title">SYSTEM METRICS</div>
+      <div class="section-title">metrics</div>
 
       <div class="grid">
-        <div class="card">
-          <h3>CPU TEMP</h3>
+        <div class="card glitch-card">
+          <h3>cpu_temp</h3>
           <div class="big" id="cpuText">--</div>
         </div>
 
-        <div class="card">
-          <h3>UPTIME</h3>
+        <div class="card glitch-card">
+          <h3>uptime</h3>
           <div class="big" id="uptimeText">--</div>
         </div>
 
-        <div class="card">
-          <h3>DISK</h3>
+        <div class="card glitch-card">
+          <h3>disk</h3>
           <div class="big" id="diskText">--</div>
         </div>
 
-        <div class="card">
-          <h3>LOAD</h3>
+        <div class="card glitch-card">
+          <h3>load</h3>
           <div class="big" id="loadText">--</div>
         </div>
       </div>
@@ -76,30 +100,66 @@
 
     <!-- GRAPH -->
     <section id="graph">
-      <div class="section-title">CPU HISTORY</div>
+      <div class="section-title">cpu_history</div>
 
       <div class="card">
         <canvas id="cpuGraph" width="900" height="200"></canvas>
       </div>
     </section>
 
+    <!-- NETWORK -->
+    <section id="network">
+      <div class="section-title">network</div>
+
+      <div class="grid" style="margin-bottom: 14px">
+        <div class="card glitch-card">
+          <h3>public_ip</h3>
+          <div class="big" id="publicIpText">--</div>
+        </div>
+        <div class="card glitch-card">
+          <h3>devices_online</h3>
+          <div class="big" id="deviceCountText">--</div>
+        </div>
+        <div class="card glitch-card">
+          <h3>updates_available</h3>
+          <div class="big" id="updatesText">--</div>
+        </div>
+      </div>
+
+      <div class="card event-box" id="deviceBox">
+        <div class="endpoint-hint">// waiting on /api/devices</div>
+      </div>
+    </section>
+
+    <!-- SECURITY -->
+    <section id="security">
+      <div class="section-title">security // auth_log</div>
+
+      <div class="card event-box" id="authLogBox">
+        <div class="endpoint-hint">// waiting on /api/auth-log</div>
+      </div>
+    </section>
+
     <!-- EVENTS -->
     <section id="events">
-      <div class="section-title">SYSTEM EVENTS</div>
+      <div class="section-title">events</div>
 
       <div class="card event-box" id="eventBox"></div>
     </section>
 
     <!-- CONTROL -->
     <section id="control">
-      <div class="section-title">CONTROL</div>
+      <div class="section-title">control</div>
 
       <div class="grid">
         <div class="card">
-          <button onclick="restartApache()">Restart Apache</button>
+          <button onclick="restartApache()">restart apache</button>
         </div>
         <div class="card">
-          <button onclick="rebootPi()">Reboot Pi</button>
+          <button onclick="rebootPi()">reboot pi</button>
+        </div>
+        <div class="card">
+          <button onclick="applyUpdates()">apt upgrade</button>
         </div>
       </div>
     </section>
