@@ -583,3 +583,193 @@ canvas {
 #hudIp {
   color: var(--text);
 }
+
+/* =========================
+   DASHBOARD GRID (bento layout)
+========================= */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-areas:
+    "metrics metrics metrics metrics metrics metrics metrics metrics metrics metrics metrics metrics"
+    "graph graph graph graph graph graph graph network network network network network"
+    "security security security security security events events events events events events events"
+    "control control control control control control control control control control control control";
+  gap: 16px;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 40px 20px 90px;
+}
+
+.panel {
+  padding: 0;
+  max-width: none;
+  margin: 0;
+  min-width: 0; /* prevents grid blowout from wide content like the graph */
+}
+
+.panel-metrics {
+  grid-area: metrics;
+}
+.panel-graph {
+  grid-area: graph;
+  display: flex;
+  flex-direction: column;
+}
+.panel-graph .card {
+  flex: 1;
+}
+.panel-network {
+  grid-area: network;
+}
+.panel-security {
+  grid-area: security;
+}
+.panel-events {
+  grid-area: events;
+}
+.panel-control {
+  grid-area: control;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "metrics"
+      "graph"
+      "network"
+      "security"
+      "events"
+      "control";
+  }
+}
+
+/* =========================
+   CARD SUBTITLES
+========================= */
+
+.card-sub {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.3px;
+}
+
+/* =========================
+   HERO TICKER
+========================= */
+
+.hero-ticker {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-faint);
+  transition: opacity 0.3s ease;
+  min-height: 14px;
+}
+
+/* =========================
+   DEVICE / AUTH LOG EXTRAS
+========================= */
+
+.event-box .device-line {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.event-box .device-ip {
+  color: var(--text);
+  min-width: 110px;
+}
+
+.event-box .device-vendor {
+  color: var(--text-dim);
+}
+
+.event-box .device-mac {
+  color: var(--text-faint);
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.badge-new {
+  display: inline-block;
+  font-size: 9px;
+  color: var(--bg);
+  background: var(--green);
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+}
+
+/* =========================
+   TOASTS
+========================= */
+
+.toast-container {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  z-index: 6000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-raised);
+  border: 1px solid var(--green-dim);
+  border-left: 3px solid var(--green);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  animation:
+    toastIn 0.25s ease,
+    toastOut 0.4s ease 4.6s forwards;
+  min-width: 220px;
+}
+
+.toast::before {
+  content: "[!] ";
+  color: var(--green);
+}
+
+@keyframes toastIn {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastOut {
+  to {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* uptime record pulse when a new record is actively being set */
+.record-live {
+  color: var(--green);
+  animation: recordPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

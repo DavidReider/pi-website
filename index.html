@@ -29,6 +29,9 @@
       </div>
     </div>
 
+    <!-- TOASTS -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <div class="scanlines"></div>
     <div class="vignette"></div>
 
@@ -38,13 +41,13 @@
       <div class="hud-item">cpu <span id="hudCpu">--</span>°c</div>
       <div class="hud-item">load <span id="hudLoad">--</span></div>
       <div class="hud-item">ping <span id="hudPing">--</span>ms</div>
+      <div class="hud-item">net <span id="hudNet">--</span></div>
       <div class="hud-item">ip <span id="hudIp">--</span></div>
     </div>
 
     <nav>
       <a href="#hero">home</a>
       <a href="#metrics">metrics</a>
-      <a href="#graph">graph</a>
       <a href="#network">network</a>
       <a href="#security">security</a>
       <a href="#events">events</a>
@@ -66,103 +69,120 @@
           <div class="hero-overlay">
             <div class="hero-title">system active</div>
             <div class="hero-sub" id="motd">// monitoring raspberry pi</div>
+            <div class="hero-ticker" id="hostTicker">
+              // scanning network...
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- METRICS -->
-    <section id="metrics">
-      <div class="section-title">metrics</div>
+    <!-- BENTO DASHBOARD GRID -->
+    <div class="dashboard-grid">
+      <!-- METRICS -->
+      <section id="metrics" class="panel panel-metrics">
+        <div class="section-title">metrics</div>
 
-      <div class="grid">
-        <div class="card glitch-card">
-          <h3>cpu_temp</h3>
-          <div class="big" id="cpuText">--</div>
+        <div class="grid">
+          <div class="card glitch-card">
+            <h3>cpu_temp</h3>
+            <div class="big" id="cpuText">--</div>
+            <div class="card-sub" id="cpuFlavor">--</div>
+          </div>
+
+          <div class="card glitch-card">
+            <h3>uptime</h3>
+            <div class="big" id="uptimeText">--</div>
+            <div class="card-sub" id="uptimeRecordText">record: --</div>
+          </div>
+
+          <div class="card glitch-card">
+            <h3>disk</h3>
+            <div class="big" id="diskText">--</div>
+          </div>
+
+          <div class="card glitch-card">
+            <h3>load</h3>
+            <div class="big" id="loadText">--</div>
+          </div>
+
+          <div class="card glitch-card">
+            <h3>memory</h3>
+            <div class="big" id="memText">--</div>
+            <div class="card-sub" id="swapText">swap: --</div>
+          </div>
+
+          <div class="card glitch-card">
+            <h3>throughput</h3>
+            <div class="big" id="netText">--</div>
+          </div>
         </div>
+      </section>
 
-        <div class="card glitch-card">
-          <h3>uptime</h3>
-          <div class="big" id="uptimeText">--</div>
-        </div>
-
-        <div class="card glitch-card">
-          <h3>disk</h3>
-          <div class="big" id="diskText">--</div>
-        </div>
-
-        <div class="card glitch-card">
-          <h3>load</h3>
-          <div class="big" id="loadText">--</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- GRAPH -->
-    <section id="graph">
-      <div class="section-title">cpu_history</div>
-
-      <div class="card">
-        <canvas id="cpuGraph" width="900" height="200"></canvas>
-      </div>
-    </section>
-
-    <!-- NETWORK -->
-    <section id="network">
-      <div class="section-title">network</div>
-
-      <div class="grid" style="margin-bottom: 14px">
-        <div class="card glitch-card">
-          <h3>public_ip</h3>
-          <div class="big" id="publicIpText">--</div>
-        </div>
-        <div class="card glitch-card">
-          <h3>devices_online</h3>
-          <div class="big" id="deviceCountText">--</div>
-        </div>
-        <div class="card glitch-card">
-          <h3>updates_available</h3>
-          <div class="big" id="updatesText">--</div>
-        </div>
-      </div>
-
-      <div class="card event-box" id="deviceBox">
-        <div class="endpoint-hint">// waiting on /api/devices</div>
-      </div>
-    </section>
-
-    <!-- SECURITY -->
-    <section id="security">
-      <div class="section-title">security // auth_log</div>
-
-      <div class="card event-box" id="authLogBox">
-        <div class="endpoint-hint">// waiting on /api/auth-log</div>
-      </div>
-    </section>
-
-    <!-- EVENTS -->
-    <section id="events">
-      <div class="section-title">events</div>
-
-      <div class="card event-box" id="eventBox"></div>
-    </section>
-
-    <!-- CONTROL -->
-    <section id="control">
-      <div class="section-title">control</div>
-
-      <div class="grid">
+      <!-- GRAPH -->
+      <section id="graph" class="panel panel-graph">
+        <div class="section-title">cpu_history</div>
         <div class="card">
-          <button onclick="restartApache()">restart apache</button>
+          <canvas id="cpuGraph" width="900" height="200"></canvas>
         </div>
-        <div class="card">
-          <button onclick="rebootPi()">reboot pi</button>
+      </section>
+
+      <!-- NETWORK -->
+      <section id="network" class="panel panel-network">
+        <div class="section-title">network</div>
+
+        <div class="grid" style="margin-bottom: 14px">
+          <div class="card glitch-card">
+            <h3>public_ip</h3>
+            <div class="big" id="publicIpText">--</div>
+          </div>
+          <div class="card glitch-card">
+            <h3>devices_online</h3>
+            <div class="big" id="deviceCountText">--</div>
+          </div>
+          <div class="card glitch-card">
+            <h3>updates_available</h3>
+            <div class="big" id="updatesText">--</div>
+          </div>
         </div>
-        <div class="card">
-          <button onclick="applyUpdates()">apt upgrade</button>
+
+        <div class="card event-box" id="deviceBox">
+          <div class="endpoint-hint">// waiting on /api/devices</div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- SECURITY -->
+      <section id="security" class="panel panel-security">
+        <div class="section-title">security // auth_log</div>
+
+        <div class="card event-box" id="authLogBox">
+          <div class="endpoint-hint">// waiting on /api/auth-log</div>
+        </div>
+      </section>
+
+      <!-- EVENTS -->
+      <section id="events" class="panel panel-events">
+        <div class="section-title">events</div>
+        <div class="card event-box" id="eventBox"></div>
+      </section>
+
+      <!-- CONTROL -->
+      <section id="control" class="panel panel-control">
+        <div class="section-title">control</div>
+
+        <div class="grid">
+          <div class="card">
+            <button onclick="restartApache()">restart apache</button>
+          </div>
+          <div class="card">
+            <button onclick="rebootPi()">reboot pi</button>
+          </div>
+          <div class="card">
+            <button onclick="applyUpdates()">apt upgrade</button>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <script src="js/main.js"></script>
   </body>

@@ -13,6 +13,26 @@ document.getElementById("heroImg").style.backgroundImage =
   `url(${images[Math.floor(Math.random() * images.length)]})`;
 
 /* =============================
+   CPU FLAVOR TEXT
+============================= */
+
+function cpuFlavor(temp) {
+  if (temp == null) return "--";
+  if (temp < 40) return "chill";
+  if (temp < 50) return "comfortable";
+  if (temp < 60) return "warm";
+  if (temp < 70) return "toasty";
+  if (temp < 80) return "hot";
+  return "surface of the sun";
+}
+
+function formatKbps(v) {
+  if (v == null) return "--";
+  if (v >= 1024) return (v / 1024).toFixed(1) + " mb/s";
+  return v + " kb/s";
+}
+
+/* =============================
    CPU GRAPH (FIXED SCALING)
 ============================= */
 
@@ -90,6 +110,37 @@ async function update() {
 
     document.getElementById("loadText").textContent = load;
 
+    /* CPU FLAVOR */
+    document.getElementById("cpuFlavor").textContent = cpuFlavor(data.cpu_temp);
+
+    /* UPTIME RECORD */
+    const rec = data.uptime_record;
+    const recordEl = document.getElementById("uptimeRecordText");
+    if (rec) {
+      recordEl.textContent = rec.is_record
+        ? "new record streak"
+        : `record: ${rec.record}`;
+      recordEl.classList.toggle("record-live", !!rec.is_record);
+    }
+
+    /* MEMORY */
+    const mem = data.mem;
+    if (mem) {
+      document.getElementById("memText").textContent =
+        mem.percent != null ? `${mem.percent}%` : "--";
+      document.getElementById("swapText").textContent =
+        `swap: ${mem.swap_percent != null ? mem.swap_percent + "%" : "--"}`;
+    }
+
+    /* NETWORK THROUGHPUT */
+    const net = data.net;
+    if (net) {
+      document.getElementById("netText").textContent =
+        `↓${formatKbps(net.rx_kbps)} ↑${formatKbps(net.tx_kbps)}`;
+      document.getElementById("hudNet").textContent =
+        `${formatKbps(net.rx_kbps)}`;
+    }
+
     /* GRAPH */
     cpuHistory = Array.isArray(data.cpu_history) ? data.cpu_history : [];
 
@@ -128,9 +179,23 @@ async function updateDevices() {
 
     devices.forEach((d) => {
       const div = document.createElement("div");
-      div.textContent = `${d.ip || "?"}  ${d.hostname || "unknown"}  ${d.mac || ""}`;
+      div.className = "device-line";
+
+      const badge = d.new ? '<span class="badge-new">new</span>' : "";
+      div.innerHTML = `
+        ${badge}
+        <span class="device-ip">${d.ip || "?"}</span>
+        <span class="device-vendor">${d.hostname || d.vendor || "unknown"}</span>
+        <span class="device-mac">${d.mac || ""}</span>
+      `;
       box.appendChild(div);
+
+      if (d.new) {
+        showToast(`new device joined: ${d.ip} (${d.vendor || d.mac})`);
+      }
     });
+
+    updateHostTicker(devices);
   } catch (err) {
     countEl.textContent = "--";
     box.innerHTML =
@@ -210,6 +275,56 @@ async function updatePublicIp() {
   } catch (err) {
     document.getElementById("publicIpText").textContent = "--";
   }
+}
+
+/* =============================
+   TOASTS
+============================= */
+
+function showToast(msg) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 5200);
+}
+
+/* =============================
+   HERO HOST TICKER
+   Cycles through connected device IPs, one at a time, BBS-roll-call style.
+============================= */
+
+let tickerDevices = [];
+let tickerIndex = 0;
+let tickerInterval = null;
+
+function updateHostTicker(devices) {
+  tickerDevices = devices;
+  if (!tickerInterval) {
+    tickerInterval = setInterval(renderTickerLine, 3200);
+    renderTickerLine();
+  }
+}
+
+function renderTickerLine() {
+  const el = document.getElementById("hostTicker");
+  if (!el) return;
+
+  if (!tickerDevices.length) {
+    el.textContent = "// scanning network...";
+    return;
+  }
+
+  const d = tickerDevices[tickerIndex % tickerDevices.length];
+  tickerIndex++;
+
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.textContent = `// host online: ${d.ip}  ${d.hostname || d.vendor || ""}`;
+    el.style.opacity = 1;
+  }, 250);
 }
 
 /* =============================
