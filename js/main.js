@@ -13,6 +13,72 @@ document.getElementById("heroImg").style.backgroundImage =
   `url(${images[Math.floor(Math.random() * images.length)]})`;
 
 /* =============================
+   THEME TOGGLE (dark / light / auto)
+============================= */
+
+const themeToggleBtn = document.getElementById("themeToggle");
+const themeModeLabel = document.getElementById("themeModeLabel");
+
+function applyComputedTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("pi-dashboard-theme-computed", theme);
+}
+
+async function applyAutoTheme() {
+  try {
+    const res = await fetch(`${API}/api/suntimes`);
+    const data = await res.json();
+    if (data.suntimes) {
+      applyComputedTheme(data.suntimes.is_day ? "light" : "dark");
+      return;
+    }
+  } catch (err) {
+    // fall through to whatever theme was already showing
+  }
+}
+
+function setThemeMode(mode) {
+  document.documentElement.setAttribute("data-theme-mode", mode);
+  localStorage.setItem("pi-dashboard-theme-mode", mode);
+  if (themeModeLabel)
+    themeModeLabel.textContent = mode === "auto" ? "auto" : "";
+
+  if (mode === "auto") {
+    applyAutoTheme();
+  } else {
+    applyComputedTheme(mode);
+  }
+}
+
+if (themeToggleBtn) {
+  const order = ["dark", "light", "auto"];
+  themeToggleBtn.addEventListener("click", () => {
+    const current =
+      document.documentElement.getAttribute("data-theme-mode") || "dark";
+    const next = order[(order.indexOf(current) + 1) % order.length];
+    setThemeMode(next);
+  });
+
+  // re-sync label + re-check auto theme on load, since the head script
+  // only had a cached guess to avoid a flash before this ran
+  const initialMode =
+    document.documentElement.getAttribute("data-theme-mode") || "dark";
+  if (themeModeLabel)
+    themeModeLabel.textContent = initialMode === "auto" ? "auto" : "";
+  if (initialMode === "auto") applyAutoTheme();
+
+  // re-check every 10 minutes in auto mode so it flips near actual sunset/sunrise
+  setInterval(
+    () => {
+      if (document.documentElement.getAttribute("data-theme-mode") === "auto") {
+        applyAutoTheme();
+      }
+    },
+    10 * 60 * 1000,
+  );
+}
+
+/* =============================
    CPU FLAVOR TEXT
 ============================= */
 
@@ -30,6 +96,26 @@ function formatKbps(v) {
   if (v == null) return "--";
   if (v >= 1024) return (v / 1024).toFixed(1) + " mb/s";
   return v + " kb/s";
+}
+
+/* =============================
+   GAUGE RINGS
+============================= */
+
+const GAUGE_CIRCUMFERENCE = 100.53; // 2 * pi * r(16)
+
+function setGauge(id, percent) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const clamped = Math.max(0, Math.min(100, percent ?? 0));
+  const offset = GAUGE_CIRCUMFERENCE * (1 - clamped / 100);
+  el.style.strokeDashoffset = offset;
+
+  let color = "#3fb950"; // green
+  if (clamped >= 85)
+    color = "#f85149"; // red
+  else if (clamped >= 65) color = "#d29922"; // amber
+  el.style.stroke = color;
 }
 
 /* =============================
@@ -65,30 +151,176 @@ function drawGraph(data) {
 }
 
 /* =============================
+   CPU STATS (min/avg/max)
+============================= */
+
+function updateGraphStats(data) {
+  if (!data || data.length === 0) return;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const avg = data.reduce((a, b) => a + b, 0) / data.length;
+
+  document.getElementById("cpuMin").textContent = min.toFixed(1) + "°c";
+  document.getElementById("cpuAvg").textContent = avg.toFixed(1) + "°c";
+  document.getElementById("cpuMax").textContent = max.toFixed(1) + "°c";
+}
+
+/* =============================
+   NETWORK THROUGHPUT SPARKLINE
+   (client-side rolling history — backend only gives a live snapshot)
+============================= */
+
+const netRxHistory = [];
+const netTxHistory = [];
+const NET_HISTORY_MAX = 120;
+
+function pushNetHistory(rx, tx) {
+  netRxHistory.push(rx ?? 0);
+  netTxHistory.push(tx ?? 0);
+  if (netRxHistory.length > NET_HISTORY_MAX) netRxHistory.shift();
+  if (netTxHistory.length > NET_HISTORY_MAX) netTxHistory.shift();
+}
+
+function drawNetGraph() {
+  const canvas = document.getElementById("netGraph");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (netRxHistory.length < 2) return;
+
+  const allValues = [...netRxHistory, ...netTxHistory];
+  const max = Math.max(...allValues, 1);
+
+  const drawLine = (data, color) => {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.3;
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * canvas.width;
+      const y = canvas.height - (v / max) * canvas.height * 0.9 - 4;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  };
+
+  drawLine(netRxHistory, "#3fb950");
+  drawLine(netTxHistory, "#d29922");
+}
+
+/* =============================
    EVENTS RENDER
 ============================= */
+
+let lastTopEventKey = null;
+
+function typeLine(el, text, speed = 18) {
+  el.textContent = "";
+  el.classList.add("typing-cursor");
+  let i = 0;
+  const timer = setInterval(() => {
+    el.textContent = text.slice(0, i + 1);
+    i++;
+    if (i >= text.length) {
+      clearInterval(timer);
+      el.classList.remove("typing-cursor");
+    }
+  }, speed);
+}
 
 function renderEvents(events) {
   const box = document.getElementById("eventBox");
   if (!box) return;
 
+  const list = events || [];
   box.innerHTML = "";
 
-  (events || []).forEach((e) => {
+  list.forEach((e, idx) => {
     const div = document.createElement("div");
-    div.textContent = `[${e.time}] ${e.msg}`;
+    const text = `[${e.time}] ${e.msg}`;
     box.appendChild(div);
+
+    const key = `${e.time}|${e.msg}`;
+    if (idx === 0 && key !== lastTopEventKey && lastTopEventKey !== null) {
+      typeLine(div, text);
+    } else {
+      div.textContent = text;
+    }
   });
+
+  if (list.length) {
+    lastTopEventKey = `${list[0].time}|${list[0].msg}`;
+  }
 }
 
 /* =============================
    MAIN LOOP
 ============================= */
 
+/* =============================
+   OPS FLOOR (digital office) — pulses tied to real poll activity
+============================= */
+
+function pulseWorker(name, duration = 900) {
+  const screen = document.getElementById(`screen${name}`);
+  const worker = document.getElementById(`worker${name}`);
+  if (screen) screen.classList.add("active");
+  if (worker) worker.classList.add("active");
+  setTimeout(() => {
+    if (screen) screen.classList.remove("active");
+    if (worker) worker.classList.remove("active");
+  }, duration);
+}
+
+/* =============================
+   MARKET TICKER
+============================= */
+
+function formatUsd(v) {
+  if (v == null) return "--";
+  return v >= 1000
+    ? v.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    : v.toFixed(2);
+}
+
+function renderMarketTicker(crypto) {
+  const track = document.getElementById("marketTickerTrack");
+  if (!track) return;
+
+  if (!crypto) {
+    track.innerHTML =
+      '<span class="market-ticker-item">// waiting on market data...</span>';
+    return;
+  }
+
+  const line = (label, coin) => {
+    const dir = coin.change24h >= 0 ? "up" : "down";
+    const arrow = coin.change24h >= 0 ? "▲" : "▼";
+    return `<span class="market-ticker-item">${label} $${formatUsd(coin.usd)} <span class="${dir}">${arrow} ${Math.abs(coin.change24h)}%</span></span>`;
+  };
+
+  const content = line("BTC", crypto.btc) + line("ETH", crypto.eth);
+  // duplicate content so the marquee loops seamlessly at -50% translateX
+  track.innerHTML = content + content;
+}
+
+async function updateMarketTicker() {
+  try {
+    const res = await fetch(`${API}/api/crypto`);
+    const data = await res.json();
+    renderMarketTicker(data.crypto);
+  } catch (err) {
+    renderMarketTicker(null);
+  }
+}
+
 async function update() {
   try {
     const res = await fetch(`${API}/api/stats`);
     const data = await res.json();
+
+    pulseWorker("Core");
 
     document.getElementById("apiDot").classList.add("online");
 
@@ -112,6 +344,15 @@ async function update() {
 
     /* CPU FLAVOR */
     document.getElementById("cpuFlavor").textContent = cpuFlavor(data.cpu_temp);
+
+    /* GAUGES */
+    setGauge(
+      "gaugeCpu",
+      data.cpu_temp != null ? (data.cpu_temp / 85) * 100 : null,
+    );
+    const diskPercent = parseInt(data.disk_usage, 10);
+    setGauge("gaugeDisk", isNaN(diskPercent) ? null : diskPercent);
+    if (data.mem) setGauge("gaugeMem", data.mem.percent);
 
     /* UPTIME RECORD */
     const rec = data.uptime_record;
@@ -145,6 +386,12 @@ async function update() {
     cpuHistory = Array.isArray(data.cpu_history) ? data.cpu_history : [];
 
     drawGraph(cpuHistory);
+    updateGraphStats(cpuHistory);
+
+    if (net) {
+      pushNetHistory(net.rx_kbps, net.tx_kbps);
+      drawNetGraph();
+    }
 
     /* EVENTS */
     renderEvents(data.events);
@@ -160,9 +407,112 @@ async function update() {
    -> { devices: [{ ip, hostname, mac }, ...] }
 ============================= */
 
+/* =============================
+   NETWORK RADAR DIAGRAM
+============================= */
+
+let radarInitialized = false;
+
+function initRadarDefs(svg) {
+  const NS = "http://www.w3.org/2000/svg";
+  const defs = document.createElementNS(NS, "defs");
+  defs.innerHTML = `
+    <radialGradient id="radarSweepGradient">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#3fb950" stop-opacity="0" />
+    </radialGradient>
+  `;
+  svg.appendChild(defs);
+
+  // background rings
+  [60, 100, 140].forEach((r) => {
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", 150);
+    c.setAttribute("cy", 150);
+    c.setAttribute("r", r);
+    c.setAttribute("class", "radar-ring");
+    svg.appendChild(c);
+  });
+
+  // rotating sweep wedge
+  const sweep = document.createElementNS(NS, "path");
+  sweep.setAttribute("d", "M150,150 L150,10 A140,140 0 0,1 220,35 Z");
+  sweep.setAttribute("class", "radar-sweep");
+  svg.appendChild(sweep);
+
+  radarInitialized = true;
+}
+
+function renderRadar(devices) {
+  const svg = document.getElementById("radarSvg");
+  if (!svg) return;
+  const NS = "http://www.w3.org/2000/svg";
+
+  if (!radarInitialized) {
+    svg.innerHTML = "";
+    initRadarDefs(svg);
+  } else {
+    // remove previously drawn nodes/links/labels, keep defs/rings/sweep
+    svg
+      .querySelectorAll(".radar-node, .radar-link, .radar-label")
+      .forEach((n) => n.remove());
+  }
+
+  // hub (the Pi itself)
+  let hub = svg.querySelector(".radar-hub");
+  if (!hub) {
+    hub = document.createElementNS(NS, "circle");
+    hub.setAttribute("cx", 150);
+    hub.setAttribute("cy", 150);
+    hub.setAttribute("r", 14);
+    hub.setAttribute("class", "radar-hub");
+    svg.appendChild(hub);
+
+    const hubLabel = document.createElementNS(NS, "text");
+    hubLabel.setAttribute("x", 150);
+    hubLabel.setAttribute("y", 154);
+    hubLabel.setAttribute("class", "radar-hub-label");
+    hubLabel.textContent = "pi";
+    svg.appendChild(hubLabel);
+  }
+
+  const count = devices.length;
+  if (count === 0) return;
+
+  const radius = 120;
+  devices.slice(0, 16).forEach((d, i) => {
+    const angle = (i / Math.min(count, 16)) * Math.PI * 2 - Math.PI / 2;
+    const x = 150 + radius * Math.cos(angle);
+    const y = 150 + radius * Math.sin(angle);
+
+    const link = document.createElementNS(NS, "line");
+    link.setAttribute("x1", 150);
+    link.setAttribute("y1", 150);
+    link.setAttribute("x2", x);
+    link.setAttribute("y2", y);
+    link.setAttribute("class", "radar-link");
+    svg.appendChild(link);
+
+    const node = document.createElementNS(NS, "circle");
+    node.setAttribute("cx", x);
+    node.setAttribute("cy", y);
+    node.setAttribute("r", 4);
+    node.setAttribute("class", "radar-node" + (d.new ? " is-new" : ""));
+    svg.appendChild(node);
+
+    const label = document.createElementNS(NS, "text");
+    label.setAttribute("x", x);
+    label.setAttribute("y", y - 9);
+    label.setAttribute("class", "radar-label");
+    label.textContent = d.ip.split(".").pop();
+    svg.appendChild(label);
+  });
+}
+
 async function updateDevices() {
   const box = document.getElementById("deviceBox");
   const countEl = document.getElementById("deviceCountText");
+  pulseWorker("Network", 1400);
   try {
     const res = await fetch(`${API}/api/devices`);
     if (!res.ok) throw new Error("bad status");
@@ -196,6 +546,7 @@ async function updateDevices() {
     });
 
     updateHostTicker(devices);
+    renderRadar(devices);
   } catch (err) {
     countEl.textContent = "--";
     box.innerHTML =
@@ -211,6 +562,7 @@ async function updateDevices() {
 
 async function updateAuthLog() {
   const box = document.getElementById("authLogBox");
+  pulseWorker("Security", 1000);
   try {
     const res = await fetch(`${API}/api/auth-log`);
     if (!res.ok) throw new Error("bad status");
@@ -243,6 +595,7 @@ async function updateAuthLog() {
 
 async function updatePackageCount() {
   const el = document.getElementById("updatesText");
+  pulseWorker("Updates", 1400);
   try {
     const res = await fetch(`${API}/api/updates`);
     if (!res.ok) throw new Error("bad status");
@@ -517,6 +870,64 @@ if (apiDotEl) {
   });
 }
 
+/* rm -rf / -> a joke "deleting" sequence, self-dismisses */
+let rmrfBuffer = "";
+const rmrfScript = [
+  "rm -rf / --no-preserve-root",
+  "removing /bin...",
+  "removing /etc...",
+  "removing /home...",
+  "removing /usr...",
+];
+
+window.addEventListener("keydown", (e) => {
+  if (e.key.length === 1) {
+    rmrfBuffer = (rmrfBuffer + e.key).slice(-24);
+  }
+  if (rmrfBuffer.replace(/\s/g, "").includes("rm-rf/")) {
+    rmrfBuffer = "";
+    triggerRmrfJoke();
+  }
+});
+
+function triggerRmrfJoke() {
+  const overlay = document.getElementById("rmrfOverlay");
+  const linesEl = document.getElementById("rmrfLines");
+  if (!overlay || !linesEl) return;
+
+  linesEl.innerHTML = "";
+  overlay.classList.add("active");
+
+  rmrfScript.forEach((line, i) => {
+    setTimeout(() => {
+      const div = document.createElement("div");
+      div.textContent = line;
+      linesEl.appendChild(div);
+    }, i * 350);
+  });
+
+  setTimeout(
+    () => {
+      const joke = document.createElement("div");
+      joke.className = "rmrf-joke";
+      joke.textContent = "just kidding — your pi is fine.";
+      linesEl.appendChild(joke);
+
+      const hint = document.createElement("div");
+      hint.className = "rmrf-hint";
+      hint.textContent = "// click anywhere to continue";
+      linesEl.appendChild(hint);
+    },
+    rmrfScript.length * 350 + 300,
+  );
+
+  const dismiss = () => {
+    overlay.classList.remove("active");
+    overlay.removeEventListener("click", dismiss);
+  };
+  overlay.addEventListener("click", dismiss);
+}
+
 /* =============================
    CONTROL ACTIONS
 ============================= */
@@ -539,8 +950,10 @@ setInterval(update, 3000);
 setInterval(updateDevices, 15000);
 setInterval(updateAuthLog, 15000);
 setInterval(updatePackageCount, 60000);
+setInterval(updateMarketTicker, 60000);
 
 update();
 updateDevices();
 updateAuthLog();
 updatePackageCount();
+updateMarketTicker();
